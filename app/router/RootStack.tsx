@@ -24,7 +24,7 @@ export default function RootStack() {
         headerTitleAlign: 'center',
       }}
     >
-      <Stack.Screen name="Onboarding" component={Onboarding} options={{headerTitle : "Welcome!"}} />
+      <Stack.Screen name="Onboarding" component={Onboarding} options={{ headerShown: false }} />
     </Stack.Navigator>
   )
 }
