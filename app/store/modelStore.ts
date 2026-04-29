@@ -1,15 +1,21 @@
 import { atomWithStorage, createJSONStorage } from 'jotai/utils';
 import { mmkvStorage } from '../utils/mmkv-storage';
+import { Modal } from '../types/Modal';
 
-interface DownloadedModel {
-  id: string;
-  path: string; // The local URI returned by RNFS
-  name: string;
-}
+const storageForDownloadedModels = createJSONStorage<Modal[]>(
+  () => mmkvStorage,
+);
+const storageForActiveModelId = createJSONStorage<string | null>(
+  () => mmkvStorage,
+);
 
-const storageForDownloadedModels = createJSONStorage<DownloadedModel[]>(() => mmkvStorage);
-const storageForActiveModelId = createJSONStorage<string | null>(() => mmkvStorage);
-
-export const downloadedModelsAtom = atomWithStorage<DownloadedModel[]>('downloadedModels', [], storageForDownloadedModels);
-export const activeModelIdAtom = atomWithStorage<string | null>('activeModelId', null, storageForActiveModelId);
-
+export const downloadedModelsAtom = atomWithStorage<Modal[]>(
+  'downloadedModels',
+  [],
+  storageForDownloadedModels,
+);
+export const activeModelIdAtom = atomWithStorage<string | null>(
+  'activeModelId',
+  null,
+  storageForActiveModelId,
+);

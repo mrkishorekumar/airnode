@@ -9,18 +9,29 @@ type ErrorScreenProps = {
   goback?: boolean;
 };
 
-export default function ErrorScreen({ error, resetError, goback }: ErrorScreenProps) {
+export default function ErrorScreen({
+  error,
+  resetError,
+  goback,
+}: ErrorScreenProps) {
   const theme = useTheme();
 
   return (
     <ThemedView style={styles.container}>
-      <Icon source="alert-circle-outline" size={96} color={theme.colors.error} />
+      <Icon
+        source="alert-circle-outline"
+        size={96}
+        color={theme.colors.error}
+      />
 
       <Text variant="headlineSmall" style={styles.title}>
         Something went wrong
       </Text>
 
-      <Text variant="bodyMedium" style={[styles.message, { color: theme.colors.onSurfaceVariant }]}>
+      <Text
+        variant="bodyMedium"
+        style={[styles.message, { color: theme.colors.onSurfaceVariant }]}
+      >
         {error.message || 'An unexpected error occurred.'}
       </Text>
 

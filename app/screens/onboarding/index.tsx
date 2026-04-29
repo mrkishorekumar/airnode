@@ -1,21 +1,21 @@
-import React, { useState, useEffect, Fragment } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, ScrollView, Alert } from 'react-native';
-import { Text, Card, Button, ProgressBar, Badge, useTheme } from 'react-native-paper';
+import { Text, Button, ProgressBar, useTheme } from 'react-native-paper';
 import RNFS from 'react-native-fs';
-import DeviceInfo from 'react-native-device-info';
-import { AVAILABLE_MODELS } from '../../utils/contants';
 import { ThemedView } from '../../components/core/ThemedView';
+import ModalInfoCard from '../../components/ui/ModalInfoCard';
+import { useAtom } from 'jotai';
+import { downloadedModelsAtom } from '../../store/modelStore';
 
 export default function Onboarding({ navigation }: any) {
   const theme = useTheme();
   const [selectedModel, setSelectedModel] = useState<any>(null);
   const [downloading, setDownloading] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [deviceRam, setDeviceRam] = useState(0);
   const [jobId, setJobId] = useState<number | null>(null);
+  const getModalListFromState = useAtom(downloadedModelsAtom)[0];
 
   useEffect(() => {
-    DeviceInfo.getTotalMemory().then((mem) => setDeviceRam(Math.round(mem / (1024 ** 3))));
     return () => {
       if (jobId) {
         RNFS.stopDownload(jobId);
@@ -29,7 +29,7 @@ export default function Onboarding({ navigation }: any) {
       setJobId(null);
       setDownloading(false);
       setProgress(0);
-      Alert.alert("Cancelled", "The download was stopped.");
+      Alert.alert('Cancelled', 'The download was stopped.');
     }
   };
 
@@ -53,11 +53,11 @@ export default function Onboarding({ navigation }: any) {
       const download = RNFS.downloadFile({
         fromUrl: selectedModel.url,
         toFile: downloadDest,
-        begin: (res) => {
+        begin: res => {
           setJobId(res.jobId); // Capture the jobId here
           console.log('Download Started. Size:', res.contentLength);
         },
-        progress: (res) => {
+        progress: res => {
           // Handle cases where contentLength might be -1 from some servers
           if (res.contentLength > 0) {
             const percent = res.bytesWritten / res.contentLength;
@@ -69,8 +69,8 @@ export default function Onboarding({ navigation }: any) {
       const result = await download.promise;
 
       if (result.statusCode === 200) {
-        Alert.alert("Success", "AI Model is ready for offline use!", [
-          { text: "Start Chatting", onPress: () => navigation.replace('Chat') }
+        Alert.alert('Success', 'AI Model is ready for offline use!', [
+          { text: 'Start Chatting', onPress: () => navigation.replace('Chat') },
         ]);
       } else {
         throw new Error(`Server returned status code ${result.statusCode}`);
@@ -79,7 +79,10 @@ export default function Onboarding({ navigation }: any) {
       // If error is caused by stopDownload, it's not a real failure
       if (error.message === 'Download has been aborted') return;
       console.error('Download Error:', error);
-      Alert.alert("Error", "Failed to download model. Please check your connection.");
+      Alert.alert(
+        'Error',
+        'Failed to download model. Please check your connection.',
+      );
     } finally {
       setDownloading(false);
       setJobId(null);
@@ -89,43 +92,46 @@ export default function Onboarding({ navigation }: any) {
   return (
     <ThemedView style={{ flex: 1 }}>
       <ThemedView style={styles.header}>
-        <Text variant="headlineMedium" style={styles.title}>Initialize AirNode</Text>
-        <Text variant="bodyMedium" style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}>
+        <Text variant="headlineMedium" style={styles.title}>
+          Initialize AirNode
+        </Text>
+        <Text
+          variant="bodyMedium"
+          style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}
+        >
           Select an AI model to download. This will be stored 100% locally.
         </Text>
       </ThemedView>
 
-      <ScrollView bounces={false} contentContainerStyle={[styles.container, { backgroundColor: theme.colors.surface }]} showsVerticalScrollIndicator={false}>
-        {AVAILABLE_MODELS.map((model) => (
-          <Card
+      <ScrollView
+        bounces={false}
+        contentContainerStyle={[
+          styles.container,
+          { backgroundColor: theme.colors.surface },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
+        {getModalListFromState.map(model => (
+          <ModalInfoCard
             key={model.id}
-            style={[styles.card, selectedModel?.id === model.id && styles.selectedCard]}
-            onPress={() => setSelectedModel(model)}
-          >
-            <Card.Content>
-              <ThemedView style={styles.cardHeader}>
-                <Text variant="titleLarge">{model.name}</Text>
-                <Badge size={24} style={deviceRam >= model.minRam ? styles.badgePass : styles.badgeWarn}>
-                  {model.size}
-                </Badge>
-              </ThemedView>
-              <Text variant="bodySmall" style={styles.descriptionText}>
-                {model.description}
-              </Text>
-              {deviceRam < model.minRam && (
-                <Text style={styles.warningText}>⚠️ May be slow on your {deviceRam}GB device</Text>
-              )}
-            </Card.Content>
-          </Card>
+            {...model}
+            selectedModelId={selectedModel?.id || null}
+            setSelectedModel={setSelectedModel}
+          />
         ))}
-
       </ScrollView>
 
       <ThemedView style={styles.footer}>
         {downloading ? (
           <ThemedView>
-            <Text style={styles.progressText}>Downloading: {Math.round(progress * 100)}%</Text>
-            <ProgressBar progress={progress} color={theme.colors.primary} style={styles.progressBar} />
+            <Text style={styles.progressText}>
+              Downloading: {Math.round(progress * 100)}%
+            </Text>
+            <ProgressBar
+              progress={progress}
+              color={theme.colors.primary}
+              style={styles.progressBar}
+            />
             <Button
               mode="text"
               onPress={handleCancel}
@@ -155,13 +161,28 @@ const styles = StyleSheet.create({
   header: { paddingHorizontal: 20, marginTop: 70 },
   title: { textAlign: 'center', marginBottom: 10, fontWeight: 'bold' },
   subtitle: { textAlign: 'center', marginBottom: 30 },
-  card: { marginBottom: 15, elevation: 1, borderWidth: 2, borderColor: 'transparent' },
+  card: {
+    marginBottom: 15,
+    elevation: 1,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
   selectedCard: { borderWidth: 2, borderColor: '#6200ee' },
   warningText: { color: '#FF9800', fontSize: 12, marginTop: 10 },
-  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5, backgroundColor: 'transparent' },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 5,
+    backgroundColor: 'transparent',
+  },
   badgePass: { backgroundColor: '#4CAF50', paddingHorizontal: 8 },
   badgeWarn: { backgroundColor: '#FF9800', paddingHorizontal: 8 },
-  footer: { padding: 20, borderTopWidth: StyleSheet.hairlineWidth, borderColor: '#ccc' },
+  footer: {
+    padding: 20,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderColor: '#ccc',
+  },
   button: { paddingVertical: 8 },
   progressBar: { height: 10, borderRadius: 5, marginTop: 10 },
   progressText: { textAlign: 'center', fontWeight: 'bold' },

@@ -1,4 +1,4 @@
-import React from 'react'
+import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useTheme } from 'react-native-paper';
 import fontFamilies from '../constants/fontFamilies';
@@ -7,7 +7,6 @@ import Onboarding from '../screens/onboarding';
 const Stack = createNativeStackNavigator();
 
 export default function RootStack() {
-
   const theme = useTheme();
 
   return (
@@ -24,7 +23,11 @@ export default function RootStack() {
         headerTitleAlign: 'center',
       }}
     >
-      <Stack.Screen name="Onboarding" component={Onboarding} options={{ headerShown: false }} />
+      <Stack.Screen
+        name="Onboarding"
+        component={Onboarding}
+        options={{ headerShown: false }}
+      />
     </Stack.Navigator>
-  )
+  );
 }
