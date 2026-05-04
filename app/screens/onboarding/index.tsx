@@ -4,16 +4,18 @@ import { Text, Button, ProgressBar, useTheme } from 'react-native-paper';
 import RNFS from 'react-native-fs';
 import { ThemedView } from '../../components/core/ThemedView';
 import ModalInfoCard from '../../components/ui/ModalInfoCard';
-import { useAtom } from 'jotai';
-import { downloadedModelsAtom } from '../../store/modelStore';
+import { useAtom, useSetAtom } from 'jotai';
+import { modalListAtom, activeModelIdAtom } from '../../store/modelStore';
+import { Modal } from '../../types/Modal';
 
 export default function Onboarding({ navigation }: any) {
   const theme = useTheme();
-  const [selectedModel, setSelectedModel] = useState<any>(null);
+  const [selectedModel, setSelectedModel] = useState<Modal | null>(null);
   const [downloading, setDownloading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [jobId, setJobId] = useState<number | null>(null);
-  const getModalListFromState = useAtom(downloadedModelsAtom)[0];
+  const [modalList] = useAtom(modalListAtom);
+  const setActiveModel = useSetAtom(activeModelIdAtom);
 
   useEffect(() => {
     return () => {
@@ -72,6 +74,10 @@ export default function Onboarding({ navigation }: any) {
         Alert.alert('Success', 'AI Model is ready for offline use!', [
           { text: 'Start Chatting', onPress: () => navigation.replace('Chat') },
         ]);
+        setActiveModel({
+          ...selectedModel,
+          downloadedModelPath: downloadDest,
+        });
       } else {
         throw new Error(`Server returned status code ${result.statusCode}`);
       }
@@ -111,7 +117,7 @@ export default function Onboarding({ navigation }: any) {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {getModalListFromState.map(model => (
+        {modalList.map(model => (
           <ModalInfoCard
             key={model.id}
             {...model}
@@ -161,23 +167,6 @@ const styles = StyleSheet.create({
   header: { paddingHorizontal: 20, marginTop: 70 },
   title: { textAlign: 'center', marginBottom: 10, fontWeight: 'bold' },
   subtitle: { textAlign: 'center', marginBottom: 30 },
-  card: {
-    marginBottom: 15,
-    elevation: 1,
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  selectedCard: { borderWidth: 2, borderColor: '#6200ee' },
-  warningText: { color: '#FF9800', fontSize: 12, marginTop: 10 },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 5,
-    backgroundColor: 'transparent',
-  },
-  badgePass: { backgroundColor: '#4CAF50', paddingHorizontal: 8 },
-  badgeWarn: { backgroundColor: '#FF9800', paddingHorizontal: 8 },
   footer: {
     padding: 20,
     borderTopWidth: StyleSheet.hairlineWidth,
@@ -186,5 +175,4 @@ const styles = StyleSheet.create({
   button: { paddingVertical: 8 },
   progressBar: { height: 10, borderRadius: 5, marginTop: 10 },
   progressText: { textAlign: 'center', fontWeight: 'bold' },
-  descriptionText: { marginTop: 5, width: '90%' },
 });

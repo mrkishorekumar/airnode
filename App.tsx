@@ -10,6 +10,7 @@ import {
   SafeAreaProvider,
 } from 'react-native-safe-area-context';
 import Root from './app/Root';
+import 'react-native-reanimated';
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';

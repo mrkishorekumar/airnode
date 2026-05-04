@@ -12,3 +12,6 @@ export interface Modal {
   source: string;
   capabilities?: string[];
 }
+export interface ActiveModal extends Modal {
+  downloadedModelPath: string;
+}
